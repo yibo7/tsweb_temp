@@ -34,7 +34,7 @@ typescript+webpack的手脚架
 // 输出模块
 // __dirname是nodejs的一个全局变量，它指向当前执行脚本所在的目录。 
 const path = require('path') 
-const NODE_ENV = 'development'
+const NODE_ENV = 'development';//'production'
 module.exports = {
 	mode: NODE_ENV,
 	entry: path.join(__dirname, "./src/index.ts"), // 唯一入口文件
@@ -79,6 +79,14 @@ module.exports = {
 
 最后运行编译：
 > npm run build
+
+注：此时编译出来的结果是没有压缩的，真正发布的时候，请将
+> const NODE_ENV = 'development';
+
+修改成:
+
+> const NODE_ENV = 'production';
+这样打包出来的文件就会是压缩好的文件。
 
 ### 三.设置html模板
 我们希望编译好的js文件或者其他文件在输出的时候引入到一个html模板中，需要使用到html-webpack-plugin插件
@@ -205,3 +213,100 @@ cnpm i -D @babel/core @babel/preset-env babel-loader core-js
 ```
 
 以上配置，将会替换掉tsconfig.json中的target配置。
+
+### 五.使用webpack打包样式(css+less)文件
+- ##### 1) 安装插件
+    如果只处理css不用考虑less,安装这两个插件即可
+    >cnpm i -D css-loader style-loader 
+    不过一般会同时让它支持less,需要安装四个插件
+    >cnpm i -D less less-loader css-loader style-loader
+
+- ##### 2) 在webpack.config.js下添加loader规则
+```js
+                //处理css的loader，使用前需要先下载use到的包
+                //npm i css-loader style-loader -D
+                {
+                    test:/\.css$/,
+                    use:[ //use中的模块是从由到上执行的
+                        'style-loader',//将将css转成的js文件添加到页面的head                       
+                        'css-loader'//将css转换成commonJs模块
+                    ]
+                },
+                //处理less的loader,需要在css的基础上再(由于less-loader依赖于less所以要同时安装less)安装:npm i less less-loader -D
+                {
+                    test: /\.less$/,
+                    use: [
+                        'style-loader',//creates style nodes from JS strings
+                        'css-loader', //translates CSS into CommonJS
+                        'less-loader'//compiles Less to CSS 
+                    ]
+                  } 
+```
+
+##### 3) 使用示例
+> import '../css/index.css'
+
+> import '../css/index.less'
+
+### 六.使用webpack打包图片或其他文件
+
+建议项目中的图片js等待资源文件统一放在src下的assets目录下。
+
+往往是在css与html代码里引用图片，因此我们需要配置两种模式
+
+- ##### 1）下载插件
+> cnpm i -D url-loader file-loader html-loader
+
+- ##### 2）配置webpack.config.js下添加loader规则
+```js
+{
+    test: /\.(jpg|png|gif|mp4)$/, //url-loader还可以打包其他文件，如果mp3,mp4
+    loader: 'url-loader', //需要下载 url-loader,file-loader,执行:npm i url-loader file-loader -D
+    options:{
+               limit:8 * 1024, //图片小于8kb就以base64的方式处理
+               name: 'images/[name].[hash:7].[ext]', //将图片文件输出images目录下,并且命名只取哈希前7位
+               esModule: false,
+             }
+},
+{
+     test: /\.html$/,
+     loader: 'html-loader', //需要下载 html-loader,执行:npm i html-loader -D 
+     esModule: false, 
+ }
+```
+
+注意：在上面的配置项中都要加上
+>esModule: false
+
+否则会遇到很多麻烦。
+
+- ##### 3）使用示例
+在css与html中都可以像传统一样引用图片
+ 比如：
+```html
+<img src="./assets/images/1.png" />
+```
+实际打包后的图片路径是：
+```html
+<img src="images/1.png" />
+```
+打包后的目录生成一个images目录里面复制了一份1.png，名称是按着上面的配置命名。
+
+如果在typescript代码中调用某个文件路径可以这样：
+
+```ts
+const zdan_url = require('./assets/files/zdan.mp4');//.mp4也可以是.png,.jpg。。。
+
+new VideoBox(zdan_url,function(player){
+        console.log('ffff');
+    })
+```
+
+其他文件也是这样使用。
+
+
+### 七.常见事项
+
+注：要使用jquery的$语法需要安装插件：
+
+> npm i --save-dev @types/jquery

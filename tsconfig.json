@@ -4,8 +4,8 @@
   
         "module": "ES6", //commonjs
         "target": "ES6", 
-        "strict": true,    
-        // "noImplicitAny": true,    
+        "strict": true,         //开启严格验证模式
+        "noImplicitAny": true,    //有错误的时候不要进行打包
         // "removeComments": true,    
         // "preserveConstEnums": true,    
         // "sourceMap": true

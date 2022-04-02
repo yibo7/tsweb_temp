@@ -6,9 +6,8 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
  
 const path = require('path')
  
- 
- 
-const NODE_ENV = 'development'
+//注意在，production模式下不能正确调试预览
+const NODE_ENV = 'development';//'development' production
 // const devMode = NODE_ENV !== 'production';
  
  
@@ -52,18 +51,40 @@ module.exports = {
                   'ts-loader'
                 ],   
                 exclude: /node_modules/     //排除掉的目录 
+            },                
+            {     //处理css的loader ,使用前要先安装包 npm i css-loader style-loader -D
+                  test:/\.css$/,
+                  use:[ //use中的模块是从由到上执行的
+                      'style-loader',//将将css转成的js文件添加到页面的head                       
+                      'css-loader'//将css转换成commonJs模块
+                  ]
+            },                
+            {   //处理less的loader,需要在css的基础上再(由于less-loader依赖于less所以要同时安装less)安装:npm i less less-loader -D
+                  test: /\.less$/,
+                  use: [
+                      'style-loader',//creates style nodes from JS strings
+                      'css-loader', //translates CSS into CommonJS
+                      'less-loader'//compiles Less to CSS 
+                  ]
             },
-			// {
-			// 	test: /\.(png|jpg|gif|jpeg)$/,
-			// 	use: [
-			// 	  {
-			// 	loader: 'url-loader',
-			// 	options: {
-			// 	limit: 8192
-			// 		}
-			// 	  }
-			// 	]
-			// },
+            {
+              test: /\.(jpg|png|gif|mp4)$/,
+              exclude: /node_modules/,
+              loader: 'url-loader', //需要下载 url-loader,file-loader,执行:npm i url-loader file-loader -D
+              options:{
+                         limit:8 * 1024, //图片小于8kb就以base64的方式处理
+                         name: 'images/[name].[hash:7].[ext]', //将图片文件输出images目录下,并且命名只取哈希前7位
+                         esModule: false,
+                      }
+            },
+            {
+                test: /\.html$/,
+                loader: 'html-loader', //需要下载 html-loader,执行:npm i html-loader -D 
+                options:{ 
+                  esModule:false,
+                 }                
+            }
+			 
             // {
             //     test: /\.css$/,
             //     use: [devMode ? 'style-loader' : MiniCssExtractPlugin.loader, 'css-loader' ]
@@ -72,27 +93,7 @@ module.exports = {
             //     test: /\.less$/,
             //     use: [devMode ? 'style-loader' : MiniCssExtractPlugin.loader, 'css-loader', 'less-loader']
             // },
-            // {
-            //     test: /\.s[ac]ss$/i,
-            //     use: [
-            //     // Creates `style` nodes from JS strings
-            //     devMode ? 'style-loader' : MiniCssExtractPlugin.loader,
-            //     // Translates CSS into CommonJS
-            //     'css-loader',
-            //     // Compiles Sass to CSS
-            //     'sass-loader',
-            //     ],
-            // },
-            // {
-            //     test: /\.m?js$/,
-            //     exclude: /(node_modules|bower_components)/,
-            //     use: {
-            //     loader: 'babel-loader',
-            //     options: {
-            //         presets: ['@babel/preset-env']
-            //     }
-            //     }
-            // },
+            
       ],
 	},
 
@@ -103,8 +104,8 @@ module.exports = {
     }),
   ],
 
-//   resolve:{  //只不过为了导入模块时省略后缀
-//     extensions:['.ts','.js']
-//   }
+  resolve:{  //只不过为了导入模块时省略后缀
+    extensions:['.ts','.js']
+  }
 };
  
